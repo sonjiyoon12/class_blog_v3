@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
 
@@ -13,107 +12,36 @@ import java.util.List;
 @Controller // IoC 대상 - 싱글톤 패턴으로 관리 됨
 public class BoardController {
 
-    // 생성자 의존 주의 - DI 처리
-    private final BoardPersistRepository br;
+    // DI 처리
+    private final BoardRepository boardRepository;
 
-    // 주소 설계 : /board/{{board.id}}/delete
-    @PostMapping("/board/{id}/delete")
-    public String delete(@PathVariable(name = "id") Long id) {
-        br.deleteById(id);
-        return "redirect:/";
-    }
+    @GetMapping("/")
+    public String index(HttpServletRequest request) {
 
-
-    /**
-     * GET 맵핑
-     * 주소 설계 : http://localhost:8080/board/{id}/update-form
-     *
-     * @return update-form.mustache
-     * @Param : id (board pk)
-     */
-    // 게시글 수정하기 화면 요청
-    @GetMapping("/board/{id}/update-form")
-    // 자동 형변환 Long 타입
-    public String updateForm(@PathVariable(name = "id") Long id, HttpServletRequest request) {
-        // select * from board_tb where id = 4;
-        Board board = br.findById(id);
-        // 머스태치 파일에 조회된 데이터를 바인딩 처리
-        request.setAttribute("board", board); // "board" 는 키 값
-        return "board/update-form";
-    }
-
-    // 게시글 수정하기 완료 후 화면 요청
-    @PostMapping("/board/{id}/update-form")
-    // 자동 형변환 Long 타입
-//    public String update(@PathVariable(name = "id") Long id,
-//                         @RequestParam(name = "title") String title,
-//                         @RequestParam(name = "content") String content,
-//                         @RequestParam(name = "username") String username) {
-
-    public String update(@PathVariable(name = "id") Long id,
-                         BoardRequest.UpdateDTO reqDTO) {
-
-        // 트랜잭션
-        // 수정 : select -> 값을 확인해서 -> 데이터 수정 -> update
-        // JPA 영속성 컨텍스트 활용
-        br.update(id, reqDTO);
-        // 수정 전략을 더티 채킹을 활용
-        // 장점
-        // 1. update 쿼리 자동 생성
-        // 2. 변경된 필드만 업데이트(성능 최적화)
-        // 3. 영속성 컨텍스트에 일관성 유지
-        // 4. 1차 캐시 자동 갱신 됨
-
-        // 성공 시 리스트 화면으로 리다이텍트 처리
-        return "redirect:/";
-
-    }
-
-
-    // 게시글 상세 보기
-    // 주소 설계  GET : http://localhost:8080/board/3
-    @GetMapping("/board/{id}") // 경로파라미터 설계
-    public String detail(@PathVariable(name = "id") Long id, HttpServletRequest request) {
-        Board board = br.findById(id);
-        request.setAttribute("board", board);
-        //prefix: classpath:/templates/
-        // return: board/detail
-        //suffix: .mustache
-
-//        1차 캐시 효과 - DB에 접근하지 않고 바로 영속성 컨텍스트에서 꺼낸다.
-//        br.findById(id);
-        return "board/detail";
-    }
-
-
-    // 게시글 목록 요청
-    // 1. index.mustache 파일을 반환 시키는 기능을 만든다.
-    // 주소 설계 : http://localhost:8080/, http://localhost:8080/index
-    @GetMapping({"/index", "/"})
-    public String boardList(HttpServletRequest request) {
-        List<Board> boardList = br.findAll();
+        // 1. 게시글 목록 조회
+        List<Board> boardList = boardRepository.findByAll();
+        // 2. 생각해볼 사항 - Board 엔티티에는 user 엔티티와 연관 관계 중
+        // 연관 관계 호출 확인
+        // boardList.get(0).getUser().getUsername();
+        // 3. 뷰에 데이터 전달
         request.setAttribute("boardList", boardList);
+
         return "index";
     }
 
-    // 게시글 작성 화면 요청 처리
-    @GetMapping("/board/save-form")
-    public String saveForm() {
-        return "board/save-form";
-    }
+    /**
+     * 게시글 상세 보기 화면 요청
+     * @param id - 게시글 pk
+     * @param request (뷰에 데이터 전달)
+     * @return detail.mustache
+     */
+    @GetMapping("/board/{id}")
+    public String detail(@PathVariable(name = "id") Long id, HttpServletRequest request) {
 
-    // 게시글 작성 액션(수행) 처리
-    @PostMapping("/board/save")
-    public String save(BoardRequest.SaveDTO reqDTO) {
-        // HTTP 요청 본문: title=값&content=값&username=값
-        // form 태그의  MIME 타입 (application/x-www-form-urlencoded)
+        Board board = boardRepository.findById(id);
+        request.setAttribute("board", board);
 
-        // reqDTO <-- 사용자가 던진 데이터 상태가 있음
-        // DTO 만들어서 -- Board 받아 -- DB 넣어야함
-        // Board board = new Board(reqDTO.getTitle(), reqDTO.getContent(), reqDTO.getUsername());
-        Board board = reqDTO.toEntity();
-        br.save(board);
-        return "redirect:/";
+        return "board/detail";
     }
 
 }
