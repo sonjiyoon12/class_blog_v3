@@ -3,14 +3,18 @@ package com.tenco.blog.board;
 import com.tenco.blog.user.User;
 import com.tenco.blog.utils.MyDateUtil;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
 
-// 기본 생성자 - JPA에서 엔티티는 기본 생성자가 필요
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
+// 기본 생성자 - JPA에서 엔티티는 기본 생성자가 필요
 @Data
 // @Table : 실제 데이터베이스 테이블 명을 지정할 때 사용
 @Table(name = "board_tb")
@@ -39,7 +43,7 @@ public class Board {
     // FetchType.EAGER : 즉시 로딩 다 가져옴
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id") // 외래키 컬럼명 명시
-    private User user;
+    private User user; // Board 에 User 들어가 있음
 
     // CreationTimestamp : 하이버네이트가 제공하는 어노테이션
     // 엔티티가 처음 저장할 때 현재 시간을 자동을 설정한다.
