@@ -3,6 +3,7 @@ package com.tenco.blog.user;
 // 디비 접근 쿼리, 트랜잭션
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,31 @@ public class UserRepository {
 
     // 생성자 의존 주입 - DI
     private final EntityManager em;
+
+    // 사용자 정보 조회(username, password)
+
+    /**
+     * 로그인 요청 기능 (사용자 정보 조회 - username, password)
+     * @param username
+     * @param password
+     * @return 성공시 User 엔티티, 실패시 null 반환
+     */
+    public User findByUsernameAndPassword(String username, String password) {
+        // JPQL
+        try {
+            String jpql = "SELECT u FROM User u " +
+                    "WHERE u.username = :username AND u.password = :password ";
+            TypedQuery typedQuery = em.createQuery(jpql, User.class);
+            typedQuery.setParameter("username", username);
+            typedQuery.setParameter("password", password);
+            return (User) typedQuery.getSingleResult();
+        } catch (Exception e) {
+            // 일치하는 사용자가 없거나 에러 발생 시 null 반환
+            // 즉, 로그인 실패를 의미함
+            return null;
+        }
+
+    }
 
 
     /**
