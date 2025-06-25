@@ -16,8 +16,47 @@ public class UserController {
     // httpSession <-- 세션 메모리에 접근 할 수 있다. WAS 단에 있음
     private final HttpSession httpSession;
 
+
+    // 회원 정보 보기 화면 요청
+    // 주소 설계 : http://localhost:8080/user/update-form
+    @GetMapping("/user/update-form")
+    public String updateForm(HttpServletRequest request, HttpSession session) {
+
+        User sessionUser = (User) session.getAttribute("sessionUser");
+        if (sessionUser == null) {
+            return "redirect:/login-form";
+        }
+        request.setAttribute("user", sessionUser);
+
+        return "user/update-form";
+    }
+
+    // 회원 정보 수정 액션 처리
+    @PostMapping("/user/update")
+    public String update(UserRequest.UpdateDTO reqDTO,
+                         HttpSession session, HttpServletRequest request) {
+
+        User sessionUser = (User) session.getAttribute("sessionUser");
+        if (sessionUser == null) {
+            return "redirect:/login-form";
+        }
+
+        // 데이터 유효성 검사 처리
+        reqDTO.validate();
+
+        // 회원 정보 수정은 권한 체크가 필요 없다 (세션에서 정보를 가져오기 때문)
+        User updateUser = userRepository.updateById(sessionUser.getId(), reqDTO);
+
+        // 세션 동기화
+        session.setAttribute("sessionUser", updateUser);
+
+        // 다시 회원 정보 보기 화면 요청
+        return "redirect:/user/update-form";
+    }
+
     /**
      * 회원 가입 화면 요청
+     *
      * @return join-form.mustache
      */
     @GetMapping("/join-form")
@@ -33,13 +72,13 @@ public class UserController {
         System.out.println("사용자 명 : " + joinDTO.getUsername());
         System.out.println("사용자 이메일 : " + joinDTO.getEmail());
 
-        try{
+        try {
             // 1. 입력된 데이터 검증(유효성 검사)
             joinDTO.validate();
 
             // 2. 사용자명 중복 체크
             User existUser = userRepository.findByUsername(joinDTO.getUsername());
-            if(existUser != null) {
+            if (existUser != null) {
                 throw new IllegalArgumentException("이미 존재하는 사용자명 입니다 "
                         + joinDTO.getUsername());
             }
@@ -61,6 +100,7 @@ public class UserController {
 
     /**
      * 로그인 화면 요청
+     *
      * @return login-form.mustache
      */
     @GetMapping("/login-form")
@@ -92,7 +132,7 @@ public class UserController {
             User user = userRepository.findByUsernameAndPassword(loginDTO.getUsername(),
                     loginDTO.getPassword());
             // 3. 로그인 실패
-            if(user == null){
+            if (user == null) {
                 // 로그인 실패: 일치된 사용자 없음
                 throw new IllegalArgumentException("사용자명 또는 비밀번호가 틀렸어");
             }
@@ -118,12 +158,4 @@ public class UserController {
         return "redirect:/";
 
     }
-
-
-    // 주소 설계 : http://localhost:8080/user/update-form
-    @GetMapping("/user/update-form")
-    public String updateForm() {
-        return "user/update-form";
-    }
-
 }

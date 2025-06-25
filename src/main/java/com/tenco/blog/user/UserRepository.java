@@ -15,10 +15,10 @@ public class UserRepository {
     // 생성자 의존 주입 - DI
     private final EntityManager em;
 
-    // 사용자 정보 조회(username, password)
 
     /**
      * 로그인 요청 기능 (사용자 정보 조회 - username, password)
+     *
      * @param username
      * @param password
      * @return 성공시 User 엔티티, 실패시 null 반환
@@ -39,7 +39,6 @@ public class UserRepository {
         }
 
     }
-
 
     /**
      * 회원정보 저장 처리
@@ -75,8 +74,25 @@ public class UserRepository {
         } catch (Exception e) {
             return null;
         }
-
     }
 
+    // 회원 정보 단 건 조회기능
+    public User findById(Long id) {
+        User user = em.find(User.class, id);
+        if (user == null) {
+            throw new RuntimeException("사용자를 찾을 수 없습니다");
+        }
+        return user;
+    }
 
+    // 회원 정보 수정기능
+    @Transactional
+    public User updateById(Long id, UserRequest.UpdateDTO reqDTO) {
+        // 조회 -> 객체의 상태값 변경 -> 트랜잭션 처리 ---> update
+        User user = findById(id);
+        //객체의 상태값을 행위를 통해서 변경
+        user.setPassword(reqDTO.getPassword());
+        // 수정된 영속 엔티티 반환(세션 동가화 용)
+        return user;
+    }
 }
