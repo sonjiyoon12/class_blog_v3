@@ -36,4 +36,30 @@ public class BoardRequest {
         }
     }
 
+    // 게시글 수정용 DTO 설계
+    @Data
+    public static class UpdateDTO {
+        private String title;
+        private String content;
+
+        //toEntity 메서드 안 만들 예정(더티 채킹 활용하기 때문)
+        // em.find() <-- Board <-- 영속화 <-- 상태값 변경하면 자동 갱신
+
+        // 유효성 검사
+        public void validate() {
+            if(title == null || title.trim().isEmpty()){
+                throw new IllegalArgumentException("제목은 필수야");
+            }
+            if(content == null || content.trim().isEmpty()){
+                throw new IllegalArgumentException("내용은 필수야");
+            }
+        }
+    }
+
 }
+
+
+
+
+
+
